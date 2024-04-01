@@ -5,7 +5,7 @@ import time
 
 def main():
     # Setup
-    game_over = False
+
     # continue_play = True
     screen = Screen()
     
@@ -16,9 +16,9 @@ def main():
     ball = Ball(screen)
     paddle1 = Paddle(screen, 1)
     paddle2 = Paddle(screen, 2)
+    scoreboard = Scoreboard(screen)
     screen.update()
 
-    scoreboard = Scoreboard(screen)
 
     # run_game(screen)
     
@@ -26,6 +26,7 @@ def main():
 
 
 def run_game(screen):
+    game_over = False
     screen.tracer(0)
     screen.update()
     
@@ -43,7 +44,7 @@ def run_game(screen):
     screen.update()
 
 
-def setup_screen(screen, w=1000, h=600, title='Pong'):
+def setup_screen(screen, w=1000, h=560, title='Pong'):
         screen.setup(width=w, height=h)
         screen.bgcolor('black')
         screen.title(title)

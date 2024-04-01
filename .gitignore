@@ -1,4 +1,4 @@
-/.DS_Store
+**/.DS_Store
 /.vscode
 /D1-9 - Misc
 /D14 - HighLowGame
@@ -8,3 +8,4 @@
 /D19 - TurtleGames
 /D7 - Hangman
 /D8 - CaesarCipher
+**/__pycache__

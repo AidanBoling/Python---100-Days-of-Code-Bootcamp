@@ -21,8 +21,8 @@ class Pixel(RawTurtle):
         self.speed(0)
         self.color(color)
 
-    # def forward_one(self):
-    #     self.forward(self.size)
+    def forward_one(self):
+        self.forward(self.size)
 
 
 class Ball(Pixel):
@@ -138,32 +138,43 @@ class Scoreboard(RawTurtle):
     def __init__(self, screen, color='white'):
         super().__init__(screen)
         self.hideturtle()
+        self.shape('square')
         self.penup()
         self.color(color)
+        self.speed(0)
         self.screen_h = screen.window_height()
-        self.draw_height = self.screen_h - 2*SEGMENT_SIZE
+        self.draw_height = self.screen_h - 2 * SEGMENT_SIZE
         self.player_points = [0, 0]
 
-        self.increase_score(1)
+        # self.increase_score(1)
+        self.set_field()
 
     def increase_score(self, player_num):
-        # player must be int
-        points = self.player_points[player_num]
-        points += 1
-        print(self.player_points[player_num])
-        #update shown score self.draw_score(points)
+        # Todo: make sure if player_num not int, throws TypeError (pytest)
+
+        self.player_points[player_num] += 1
+        # print('points: ', self.player_points[player_num])
+        #update shown score 
+        self.draw_score(self.player_points[player_num], player_num)
 
 
     def set_field(self):
-        #draw dashed line down middle
-            # create regular turtle 
-            # set to turtle.pensize(10)
-            # set to position of y = -draw_height
-            # while not turtle.ycor() == draw_height:
-                # create dashed line --> penup(), forward(5), pendown(), forward(15)
+        # Draw dashed line down middle
+        self.shapesize(.25, .75, 1)        
+        self.setheading(90)
+
+        y = -self.draw_height/2 + SEGMENT_SIZE
+        self.goto(0, y)
+
+        while self.ycor() < self.draw_height/2:
+            self.stamp()
+            self.forward((3/2)*SEGMENT_SIZE)
+            
+        print(self.pos())
+        self.shapesize(1,1,1)
+
         #draw score_player_1 on left side top
         #draw score_player_2 on right side top
-        pass
 
     def draw_score(self, points, player):
         # Move to start position, based on which player
@@ -180,7 +191,6 @@ class Scoreboard(RawTurtle):
         # for num in score_nums:
         # 
 
-        
         pass
 
     # def show_game_over(self):
