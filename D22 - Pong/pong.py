@@ -2,14 +2,14 @@ from turtle import RawTurtle
 import time
 
 PIXEL_SIZE = 20
-X_OFFSET = -5
+AXIS_OFFSET = -5
 
 DOWN = 270 
 UP = 90
 LEFT = 180 
 RIGHT = 0
 
-# detect ball collision with paddle -- (add point to player)
+# [x] detect ball collision with paddle -- (add point to player)
 # [x] detect ball off screen -- (game over)
 
 #Ball mechanics - bounces
@@ -43,7 +43,7 @@ class Ball(Pixel):
         self.p2 = paddle2
         self.bounds_x = self.screen.window_width()/2
         self.bounds_y = self.screen.window_height()/2
-        self.x_0 = X_OFFSET
+        self.x_0 = AXIS_OFFSET
         self.start_pos = (self.p1.pixels[1].xcor() + PIXEL_SIZE, 0)
         self.is_moving = False
         self.start_angle = -40
@@ -111,7 +111,6 @@ class Ball(Pixel):
             if self.distance(pixel) <= PIXEL_SIZE/2:
                 return 2
         return False
-        
 
 
 class Paddle:
@@ -121,8 +120,8 @@ class Paddle:
         self.screen_h = self.screen.window_height()
         self.max_y = self.screen_h / 2 - PIXEL_SIZE
         self.max_x = self.screen_w / 2 - 2 * PIXEL_SIZE
-        self.x_start = X_OFFSET
-        self.y_start = PIXEL_SIZE
+        self.x_start = AXIS_OFFSET
+        self.y_start = PIXEL_SIZE + AXIS_OFFSET
         self.pixel_color = 'white'
         self.length = 4
         self.pixels = []
@@ -133,8 +132,13 @@ class Paddle:
 
 
     def listening_for_keys(self):
-        self.screen.onkey(self.move_up, 'Up')
-        self.screen.onkey(self.move_down, 'Down')
+        if self.player == 1:
+            self.screen.onkey(self.move_up, 'w')
+            self.screen.onkey(self.move_down, 's')
+        if self.player == 2:
+            self.screen.onkey(self.move_up, 'Up')
+            self.screen.onkey(self.move_down, 'Down')
+
         self.screen.listen()
         return True
     
@@ -144,7 +148,7 @@ class Paddle:
         x = self.x_start
 
         if self.player == 1: 
-            x -= self.max_x
+            x -= self.max_x     # left side
 
         if self.player == 2:
             x += self.max_x     # right side
@@ -160,48 +164,32 @@ class Paddle:
         self.pixels.append(pixel)
 
 
-    def move(self):
-        pass
+    def move(self, pixels, dir):
+        leading_pixel = pixels[0]
+        leading_pixel.setheading(dir)
+        self.move_paddle(pixels, dir)
+        leading_pixel.forward_one()
 
 
-    #  TODO: These were taken from snake game; fix/adapt for pong paddle
-
-    # def move_forward(self):
-    #     if self.is_moving:
-    #         self.move_body()
-    #         self.head.forward_one()
-
-    # def move_body(self):
-    #     '''Move each pixel to position and direction of the segment in front of it.'''
-    #     range_max = len(self.pixels) - 1
-        
-    #     for n in range(range_max, 0, -1):
-    #         if n > 0:
-    #             next = self.segments[n-1]
-    #             self.pixels[n].goto(next.position())
-    #             self.pixels[n].setheading(next.heading())
+    def move_paddle(self, pixels, dir):
+        '''Move each pixel to position and direction of the segment in front of it.'''
+        range_max = len(pixels[1::])
+        for n in range(range_max, 0, -1):
+            if n > 0:
+                next = pixels[n-1]
+                pixels[n].goto(next.position())
 
 
     def move_up(self):
-        # --> head would be the segment at top --> set self.head = self.pixels[0] ???
-        # if head < self.max_y
-        # self.head.setheading(90)
-        pass
+        if self.pixels[0].ycor() < self.max_y - PIXEL_SIZE/2:
+            self.move(self.pixels, UP)
 
 
     def move_down(self):
-        # --> head would be the segment at bottom --> set self.head = self.pixels[-1] ???
-        # if head > -self.max_y
-        # self.head.setheading(270)
-        pass
-    
-    # Can't move past top or bottom of screen
-
-    
+        if self.pixels[-1].ycor() > -self.max_y + PIXEL_SIZE:
+            self.move(self.pixels[::-1], DOWN)
 
 
-
-#This might also be better as not Turtle extended, but just "class Scoreboard:", arranging "pixel" turtles to draw:
 class Scoreboard(RawTurtle):
 
     def __init__(self, screen, color='white'):
@@ -215,14 +203,14 @@ class Scoreboard(RawTurtle):
         self.screen_h = screen.window_height()
         self.draw_height = self.screen_h - 2 * PIXEL_SIZE
         self.draw_max_y = self.draw_height/2 - PIXEL_SIZE
-        self.x_0 = X_OFFSET
+        self.x_0 = AXIS_OFFSET
         self.player_points = [0, 0]
 
         self.set_field()
 
 
     def increase_score(self, player_num):
-        self.player_points[player_num] += 1
+        self.player_points[player_num - 1] += 1
         
         # Update displayed score 
         self.draw_score(player_num)
@@ -234,7 +222,7 @@ class Scoreboard(RawTurtle):
         # Draw dashed line down middle
         self.shapesize(.25, .75)        
         self.setheading(90)
-        self.goto(X_OFFSET, -self.draw_max_y)
+        self.goto(AXIS_OFFSET, -self.draw_max_y)
 
         while self.ycor() <= self.draw_height/2:
             self.stamp()
@@ -317,3 +305,7 @@ class Scoreboard(RawTurtle):
     #     self.write(f'Final Score: {self.points}', True, align='center', font=('Courier', 18, 'normal'))
 
     #     self.screen.update()
+            
+
+
+    #Scoreboard might also be better as not Turtle extended, but just "class Scoreboard:", arranging "pixel" turtles to draw??
