@@ -13,9 +13,9 @@ def main():
     # while continue_play:
     setup_screen(screen)
 
-    ball = Ball(screen)
     paddle1 = Paddle(screen, 1)
     paddle2 = Paddle(screen, 2)
+    ball = Ball(screen, paddle1, paddle2)
     scoreboard = Scoreboard(screen)
     screen.update()
 
@@ -44,7 +44,7 @@ def run_game(screen):
     screen.update()
 
 
-def setup_screen(screen, w=1000, h=560, title='Pong'):
+def setup_screen(screen, w=1020, h=560, title='Pong'):
         screen.setup(width=w, height=h)
         screen.bgcolor('black')
         screen.title(title)
