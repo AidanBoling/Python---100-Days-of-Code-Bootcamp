@@ -9,7 +9,6 @@ def main():
     # continue_play = True
     screen = Screen()
     
-
     # while continue_play:
     setup_screen(screen)
 
@@ -32,24 +31,25 @@ def run_game(screen, scoreboard, ball):
     while not game_over:
         ball.in_play() 
         
-        player_scored = ball.hit_paddle()
-        if player_scored:
+        if ball.hit_paddle():
             ball.bounce_back()
-            scoreboard.increase_score(player_scored)
-
+            
         hit_wall = ball.hit_wall()
         if hit_wall == 'x':
             ball.bounce_off()
         elif hit_wall == 'y':
-            # ball.bounce_back()
-            game_over = True
+            paddle = ball.last_paddle_hit
+            player = paddle.player
+            print('player scored: ', player)
+            scoreboard.increase_score(player)
+            ball.reset_pos()
+            paddle.reset_pos()
+            # game_over = True
 
         screen.update()
-        time.sleep(0.05)
+        time.sleep(ball.move_speed)
     
-        # if self.has_collided():
-        #     self.game_over = True
-        #     self.scoreboard.show_game_over()
+    # Todo: When game over...
     
     screen.update()
 
@@ -63,22 +63,5 @@ def setup_screen(screen, w=1020, h=560, title='Pong'):
 def ball_collision():
     # if ball.distance(paddle)
     pass
-
-
-
-    # def check_snake_ate_food(self):
-    #     head = self.snake.head
-    #     if head.distance(self.food) <= head.size / 4:
-    #         self.food.move_position()
-    #         self.snake.grow_by_one()
-    #         self.scoreboard.increase_score()
-    #         return True
-        
-
-# def hit_bounce_surface(ball):
-    
-#     if ball.hit_paddle():
-#         return True
-#     return False
 
 main()
