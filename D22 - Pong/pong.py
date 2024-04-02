@@ -1,4 +1,5 @@
 from turtle import RawTurtle
+import time
 
 PIXEL_SIZE = 20
 X_OFFSET = -5
@@ -9,11 +10,11 @@ LEFT = 180
 RIGHT = 0
 
 # detect ball collision with paddle -- (add point to player)
-# detect ball off screen -- (game over)
+# [x] detect ball off screen -- (game over)
 
 #Ball mechanics - bounces
     # [x] Starts "on" P1 paddle
-    # Goes towards bottom, bounces, angles up to P2
+    # [x] Goes towards bottom, bounces, angles up to P2
     # If collides with paddle, bounces back -- (plus, increase_score(player))
     # If collides with wall, game over
 
@@ -42,16 +43,22 @@ class Ball(Pixel):
         self.p2 = paddle2
         self.bounds_x = self.screen.window_width()/2
         self.bounds_y = self.screen.window_height()/2
+        self.x_0 = X_OFFSET
         self.start_pos = (self.p1.pixels[1].xcor() + PIXEL_SIZE, 0)
         self.is_moving = False
+        self.start_angle = -40
 
         self.goto(self.start_pos)
-        # self.setheading(-45) --> can move at a diag angle without changing turtle shape orientation???
+        self.setheading(self.start_angle)
+        self.settiltangle(-self.start_angle)
+
         self.listening_for_keys()
 
 
     def listening_for_keys(self):
         self.screen.onkey(self.toggle_is_moving, 'space')
+        # self.screen.onkey(self.in_play, 'Right')
+
         self.screen.listen()
         return True
 
@@ -65,11 +72,46 @@ class Ball(Pixel):
 
     def in_play(self):
         if self.is_moving:
-            pass
+            self.forward(PIXEL_SIZE/2)
+
+
+    def bounce_off(self):       
+        dir = self.heading()
+        tilt = self.tiltangle()
+        self.setheading(-dir)
+        self.settiltangle(-tilt)
+
+
+    def bounce_back(self):
+        dir = self.heading() + 180
+        tilt = -dir
+        self.setheading(dir)
+        self.settiltangle(tilt)
+
+
+    def hit_wall(self):
+        pos = self.pos()
+        left_wall = round(self.x_0 - self.bounds_x + PIXEL_SIZE)
+        right_wall = round(self.x_0 + self.bounds_x - PIXEL_SIZE)
+        top_wall = round(self.bounds_y - PIXEL_SIZE)
+        bottom_wall = round(-self.bounds_y + PIXEL_SIZE)
+        
+        if pos[0] > right_wall or pos[0] < left_wall: 
+            return 'y'
+        if pos[1] >= top_wall or pos[1] <= bottom_wall:
+            return 'x'
+        return False
     
 
-    def bounce(self):
-        pass
+    def hit_paddle(self):
+        for pixel in self.p1.pixels:
+            if self.distance(pixel) <= PIXEL_SIZE/2:
+                return 1
+        for pixel in self.p2.pixels:
+            if self.distance(pixel) <= PIXEL_SIZE/2:
+                return 2
+        return False
+        
 
 
 class Paddle:
@@ -155,6 +197,7 @@ class Paddle:
     
     # Can't move past top or bottom of screen
 
+    
 
 
 
