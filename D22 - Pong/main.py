@@ -4,8 +4,6 @@ import time
 
 
 def main():
-    # Setup
-
     # continue_play = True
     screen = Screen()
     
@@ -17,13 +15,17 @@ def main():
     
     ball = Ball(screen, paddle1, paddle2)
     scoreboard = Scoreboard(screen)
+
     screen.update()
-    run_game(screen, scoreboard, ball)
+    run_game(screen, scoreboard, ball, paddle1, paddle2)
     
+    # Todo: When game over... 
+    screen.update()
+
     screen.exitonclick()
 
 
-def run_game(screen, scoreboard, ball):
+def run_game(screen, scoreboard, ball, paddle1, paddle2):
     game_over = False
     screen.tracer(0)
     screen.update()
@@ -32,26 +34,23 @@ def run_game(screen, scoreboard, ball):
         ball.in_play() 
         
         if ball.hit_paddle():
+            ball.paddle_change_heading()
             ball.bounce_back()
             
         hit_wall = ball.hit_wall()
         if hit_wall == 'x':
             ball.bounce_off()
+        
         elif hit_wall == 'y':
             paddle = ball.last_paddle_hit
             player = paddle.player
-            print('player scored: ', player)
+
             scoreboard.increase_score(player)
-            ball.reset_pos()
+            ball.reset_pos(paddle)
             paddle.reset_pos()
-            # game_over = True
 
         screen.update()
         time.sleep(ball.move_speed)
-    
-    # Todo: When game over...
-    
-    screen.update()
 
 
 def setup_screen(screen, w=1020, h=560, title='Pong'):
@@ -60,8 +59,5 @@ def setup_screen(screen, w=1020, h=560, title='Pong'):
         screen.title(title)
         screen.tracer(0)
 
-def ball_collision():
-    # if ball.distance(paddle)
-    pass
 
 main()

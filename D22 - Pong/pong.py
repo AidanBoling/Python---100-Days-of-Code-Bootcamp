@@ -1,4 +1,5 @@
 from turtle import RawTurtle
+from data import number_shapes
 
 PIXEL_SIZE = 20
 AXIS_OFFSET = -5
@@ -8,24 +9,13 @@ UP = 90
 LEFT = 180 
 RIGHT = 0
 
-# [x] detect ball collision with paddle -- (add point to player)
-# [x] detect ball off screen 
-
-#Ball mechanics - bounces
-    # [x] Starts "on" P1 paddle
-    # [x] Goes towards bottom, bounces, angles up to P2
-    # [x] If collides with paddle, bounces back -- (plus, increase_score(player))
-    # [x] If collides with wall, game over
-
-#TODO: refinement -- change ball bounce_back angle depending on area of paddle it hits...
-        # on collision, the greater the ball.distance(paddle), the bounce_back angle changes by +1??
-# [x]  refinement -- adjust move speed every time ball hits 
 #TODO (maybe): refinement - when ball "on" a paddle, allow ball to move with paddle (so player can change the ball start pos)?
 #TODO (maybe): refinement - when a player score updates, only update that score, rather than whole screen (...prob use separate turtles for each -- dash, p1 score, p2 score ?)
-
-#TODO: fix so that player gets point only if other player misses (ball off screen) (instead of off-screen = game over)
-# [x]: fix so that ball resets onto paddle of player who got point --> get player number from self.last_paddle_hit.player
+#TODO: refinement - at game start, add a message of "press space to start ball moving" (clears when spacebar pressed)
 #TODO: conditions for game_over?
+#   TODO: refinement - end-of-game messages, etc.
+#Check (someday): Paddles move kind of slowly. Limitation of turtle, or something that can be fixed?
+
 
 class Pixel(RawTurtle):
 
@@ -53,8 +43,9 @@ class Ball(Pixel):
         self.bounds_y = self.screen.window_height()/2
         self.x_0 = AXIS_OFFSET
         self.is_moving = False
+        self.direction = 'right'
         self.move_speed = 0.03
-        self.start_angle = -40
+        self.start_angle = -45
         self.last_paddle_hit = self.p1
         self.start_pos = (self.p1.xcor() + PIXEL_SIZE, AXIS_OFFSET)
 
@@ -66,6 +57,7 @@ class Ball(Pixel):
 
 
     def listening_for_keys(self):
+        '''Keyboard control -- use spacebar to pause/resume motion of the ball.'''
         self.screen.onkey(self.toggle_is_moving, 'space')
         self.screen.listen()
         return True
@@ -80,29 +72,55 @@ class Ball(Pixel):
 
 
     def in_play(self):
+        '''Ball moves forward, as long as is_moving is True'''
         if self.is_moving:
             self.forward(PIXEL_SIZE/2)
 
 
     def bounce_off(self):
-        '''Normal bounce (incident angle == reflection angle)'''       
+        '''Normal bounce (incident angle == reflection angle)'''
         dir = self.heading()
         tilt = self.tiltangle()
         self.setheading(-dir)
         self.settiltangle(-tilt)
+        self.set_ball_dir()
 
 
     def bounce_back(self):
-        '''Reflects ball back in opposite direction'''
+        '''Reflects ball back in opposite direction.'''
         dir = self.heading() + 180
         tilt = -dir
         self.setheading(dir)
         self.settiltangle(tilt)
-        self.move_speed *= 0.9
+        self.set_ball_dir()
+
+
+    def set_ball_dir(self):
+        if 270 > self.heading() > 90: 
+            self.direction = 'left'
+        else:
+            self.direction = 'right'
+
+    
+    def paddle_change_heading(self, factor=2):
+        '''Changes ball heading slightly depending how far from the center of the paddle the ball hit. Takes a 
+        positive number that changes the amount of the direction change. Inverse relationship -- larger numbers 
+        will decrease total angle change. Default is 2.'''
+        if factor <= 0:
+            raise ValueError('Factor must be positive number greater than 0.')
+        
+        d_heading = self.distance(self.last_paddle_hit)/factor
+        if self.xcor() > 0:
+            self.setheading(self.heading() + d_heading)
+            self.settiltangle(self.tiltangle() - d_heading)
+        else:
+            self.setheading(self.heading() - d_heading)
+            self.settiltangle(self.tiltangle() + d_heading)
 
 
     def hit_wall(self):
-        '''Detects if ball collides with a wall. Returns False if no collision, otherwise returns the axis parallel to that wall -- "x" or "y".'''
+        '''Detects if ball collides with a wall. Returns False if no collision, otherwise returns the axis parallel 
+        to that wall -- "x" or "y".'''
         pos = self.pos()
         left_wall = round(self.x_0 - self.bounds_x + PIXEL_SIZE)
         right_wall = round(self.x_0 + self.bounds_x - PIXEL_SIZE)
@@ -117,27 +135,47 @@ class Ball(Pixel):
     
 
     def hit_paddle(self):
-        # If in "range" of paddle, within circle w/ diam. = paddle length, 
-        # AND x-coord is close to paddle x-track position, i.e. paddle x-coord, then has collided.
+        '''Detects whether ball has collided with a paddle. If ball hits a paddle, sets that paddle as last_paddle_hit, 
+        ball speed increases, and returns True.'''
 
-        if self.distance(self.p1) <= self.p1.length/2 and self.xcor() <= self.p1.xcor() + PIXEL_SIZE/2:
-            self.last_paddle_hit = self.p1
-            return True
-        if self.distance(self.p2) <= self.p2.length/2 and self.xcor() >= self.p2.xcor() - PIXEL_SIZE/2:
-            self.last_paddle_hit = self.p2
-            return True
+        # If ball in "range" of paddle (circle w/ diam. of paddle length), and it's x-coord is 
+        # within the "hit" area (1 PIXEL wide) in front of paddle, then ball has collided.
+        
+        if self.is_moving:
+            if self.direction == 'left':   # ball is moving towards left side
+                paddle = self.p1
+                paddle_range = self.p1.length / 2
+
+            else:
+                paddle = self.p2
+                paddle_range = self.p2.length / 2
+
+            # if ball in "range" of paddle
+            if self.distance(paddle) <= paddle_range:
+                ball_absolute_x = abs(self.xcor())
+                
+                # if ball x-coord is within paddle "hit" zone
+                if abs(paddle.hit_boundary_x) <= ball_absolute_x < abs(paddle.surface_x):
+                    self.last_paddle_hit = paddle
+                    self.move_speed *= 0.9
+                    return True            
+        
         return False
 
-    def reset_pos(self):
-        '''Sets ball "on" to whichever paddle off of which ball last bounced (last_paddle_hit).'''
-        paddle = self.last_paddle_hit
-        x = paddle.xcor()
-        if paddle.player == 1:
-            x += PIXEL_SIZE
-        if paddle.player == 2:
-            x -= PIXEL_SIZE
-        self.goto(x, self.start_pos[1])
+
+    def reset_pos(self, paddle=''):
+        '''Sets ball "on" paddle indicated, with is_moving = False. Default is paddle 1.'''
+        if not paddle:
+            paddle = self.p1
+        
+        if paddle.xcor() > 0:
+            self.start_angle *= -1
+        
         self.is_moving = False
+        self.setheading(self.start_angle)
+        self.settiltangle(-self.start_angle)
+        self.set_ball_dir()
+        self.goto(paddle.hit_boundary_x, self.start_pos[1])
 
 
 class Paddle(Pixel):
@@ -150,14 +188,56 @@ class Paddle(Pixel):
         self.max_y = self.screen_h / 2 - PIXEL_SIZE
         self.max_x = self.screen_w / 2 - 2 * PIXEL_SIZE
         self.length = 5 * PIXEL_SIZE
+        self._surface_x = 0
+        self._hit_boundary_x = 0
         self.x_start = AXIS_OFFSET
         self.y_start = AXIS_OFFSET
-        self.shapesize(5, 1)
-        self.speed(9)
         self.player = player
 
-        self.listening_for_keys()
+        self.shapesize(5, 1)
+        self.speed(9)
         self.set_start_pos()
+        self.set_surface_x()
+        self.set_hit_boundary_x()
+        self.listening_for_keys()
+
+    
+    def set_start_pos(self):
+        if self.player == 1: 
+            self.x_start -= self.max_x     # left side
+        if self.player == 2:
+            self.x_start += self.max_x     # right side
+        
+        self.setposition(self.x_start, self.y_start)
+    
+
+    @property
+    def surface_x(self):
+        return self._surface_x
+    
+
+    @property
+    def hit_boundary_x(self):
+        return self._hit_boundary_x
+
+
+    def set_surface_x(self):
+        if self.xcor() < 0:
+            self._surface_x = self.xcor() + PIXEL_SIZE/2
+        else:
+            self._surface_x = self.xcor() - PIXEL_SIZE/2
+
+
+    def set_hit_boundary_x(self):
+        if self.xcor() < 0:
+            self._hit_boundary_x = self.xcor() + PIXEL_SIZE
+        else:
+            self._hit_boundary_x = self.xcor() - PIXEL_SIZE
+    
+
+    def reset_pos(self):
+        self.setposition(self.x_start, self.y_start)
+
 
     def listening_for_keys(self):
         if self.player == 1:
@@ -170,16 +250,6 @@ class Paddle(Pixel):
         self.screen.listen()
         return True
     
-    def set_start_pos(self):
-        if self.player == 1: 
-            self.x_start -= self.max_x     # left side
-        if self.player == 2:
-            self.x_start += self.max_x     # right side
-        
-        self.setposition(self.x_start, self.y_start)
-    
-    def reset_pos(self):
-        self.setposition(self.x_start, self.y_start)
 
     def move(self, dir):
         if dir != int(self.heading()):
@@ -206,18 +276,18 @@ class Scoreboard(RawTurtle):
 
     def __init__(self, screen, color='white'):
         super().__init__(screen)
+        self.screen_h = screen.window_height()
+        self.draw_height = self.screen_h - 2 * PIXEL_SIZE
+        self.draw_max_y = self.draw_height/2 - PIXEL_SIZE
+        self.x_0 = AXIS_OFFSET
+        self.player_points = [0, 0]
+        
         self.hideturtle()
         self.shape('square')
         self.shapesize(.5, .5)
         self.color(color)
         self.penup()
         self.speed(0)
-        self.screen_h = screen.window_height()
-        self.draw_height = self.screen_h - 2 * PIXEL_SIZE
-        self.draw_max_y = self.draw_height/2 - PIXEL_SIZE
-        self.x_0 = AXIS_OFFSET
-        self.player_points = [0, 0]
-
         self.set_field()
 
 
@@ -251,20 +321,6 @@ class Scoreboard(RawTurtle):
     def draw_score(self, player):
         # Numbers "drawn" starting from top-inside corner of score, on each side.
         
-        # TODO (?): move number_shapes to separate file.
-        number_shapes = {
-                '0': {'width': 3, 'moves': {'1': [3, 6, 3, 6], '2': [3, 6, 3, 6]}, 'directions': {'1': [LEFT, DOWN, RIGHT, UP], '2': [RIGHT, DOWN, LEFT, UP]}}, 
-                '1': {'width': 1, 'moves': {'1': [7], '2': [7]}, 'directions': {'1': [DOWN], '2': [DOWN]}},
-                '2': {'width': 3, 'moves': {'1': [3, 3, 3, 3, 3, 4], '2': [3, 3, 3, 3, 4]}, 'directions': {'1': [LEFT, RIGHT, DOWN, LEFT, DOWN, RIGHT], '2': [RIGHT, DOWN, LEFT, DOWN, RIGHT]}}, 
-                '3': {'width': 3, 'moves': {'1': [3, 3, 3, 3, 3, 3, 4], '2': [3, 3, 3, 3, 3, 4]}, 'directions': {'1': [LEFT, RIGHT, DOWN, LEFT, RIGHT, DOWN, LEFT], '2': [RIGHT, DOWN, LEFT, RIGHT, DOWN, LEFT]}},
-                '4': {'width': 3, 'moves': {'1': [6, 3, 3, 4], '2': [3, 3, 3, 7]}, 'directions': {'1': [DOWN, UP, LEFT, UP], '2': [DOWN, RIGHT, UP, DOWN]}},
-                '5': {'width': 3, 'moves': {'1': [3, 3, 3, 3, 4], '2': [3, 3, 3, 3, 3, 4]}, 'directions': {'1': [LEFT, DOWN, RIGHT, DOWN, LEFT], '2': [RIGHT, LEFT, DOWN, RIGHT, DOWN, LEFT]}},
-                '6': {'width': 3, 'moves': {'1': [3, 6, 3, 3, 3], '2': [3, 3, 6, 3, 3, 3]}, 'directions': {'1': [LEFT, DOWN, RIGHT, UP, LEFT], '2': [RIGHT, LEFT, DOWN, RIGHT, UP, LEFT]}},
-                '7': {'width': 3, 'moves': {'1': [3, 3, 7], '2': [3, 7]}, 'directions': {'1': [LEFT, RIGHT, DOWN], '2': [RIGHT, DOWN]} },
-                '8': {'width': 3, 'moves': {'1': [3, 6, 3, 6, 3, 3], '2': [3, 6, 3, 6, 3, 3]}, 'directions': {'1': [LEFT, DOWN, RIGHT, UP, DOWN, LEFT], '2': [RIGHT, DOWN, LEFT, UP, DOWN, RIGHT]}},
-                '9': {'width': 3, 'moves': {'1': [3, 3, 3, 3, 7], '2': [3, 6, 3, 3, 3]}, 'directions': {'1': [LEFT, DOWN, RIGHT, UP, DOWN], '2': [RIGHT, DOWN, UP, LEFT, UP]}},
-                }
-        
         size = PIXEL_SIZE/2
         points = self.player_points[player - 1]
         digits_list = list(str(points))
@@ -279,7 +335,7 @@ class Scoreboard(RawTurtle):
             score_digits = digits_list[::-1]
 
         elif player == 2:
-            start_x += d_from_center
+            start_x += d_from_center    # right side
             score_digits = digits_list
 
         for digit in score_digits:
@@ -318,7 +374,3 @@ class Scoreboard(RawTurtle):
     #     self.write(f'Final Score: {self.points}', True, align='center', font=('Courier', 18, 'normal'))
 
     #     self.screen.update()
-            
-
-
-    #Scoreboard might also be better as not Turtle extended, but just "class Scoreboard:", arranging "pixel" turtles to draw??
