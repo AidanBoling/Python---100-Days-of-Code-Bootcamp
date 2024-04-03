@@ -1,5 +1,7 @@
 **/.DS_Store
 /.vscode
+**/__pycache__
+
 /D1-9 - Misc
 /D14 - HighLowGame
 /D16 - CoffeeMachineOOP
@@ -8,4 +10,5 @@
 /D19 - TurtleGames
 /D7 - Hangman
 /D8 - CaesarCipher
-**/__pycache__
+
+**/high_score.txt

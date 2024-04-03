@@ -1,6 +1,13 @@
 from turtle import Screen
-from snake_game import Game, Snake, FoodTurtle, Scoreboard
+from snake_game import Game
+from snake import Snake
+from food import FoodTurtle
+from scoreboard import Scoreboard
+# import os
 
+# cwd = os.getcwd()  # Get the current working directory (cwd)
+# files = os.listdir(cwd)  # Get all the files in that directory
+# print("Files in %r: %s" % (cwd, files))
 
 def main():
     continue_play = True
