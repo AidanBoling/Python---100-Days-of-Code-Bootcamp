@@ -1,6 +1,7 @@
 **/.DS_Store
 /.vscode
 **/__pycache__
+/.idea
 
 /D1-9 - Misc
 /D14 - HighLowGame
@@ -10,5 +11,16 @@
 /D19 - TurtleGames
 /D7 - Hangman
 /D8 - CaesarCipher
+/D25
+/D26
+/D27
+/D28 - PomodoroTimer
+/D29 - PasswordManager
+/D31 - FlashcardApp
+/D33
+/D34
+/D35
+/D37 - HabitTracker
+/D38
 
 **/high_score.txt
