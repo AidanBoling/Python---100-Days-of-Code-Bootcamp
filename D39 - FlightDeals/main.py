@@ -9,6 +9,7 @@ user_params = {
     'min_stay_length': 5,
     'max_stay_length': 30,
     'currency': 'USD',
+    'currency_symbol': '$',
     'locale': 'en',
     'exclude_airlines': ['NK'], #spirit airlines
     }
@@ -17,15 +18,12 @@ user_params = {
 
 
 def main():
-
-    flight_search = FlightSearch(user_params)
     data_manager = DataManager()
-    flight_data = FlightData(flight_search, user_params['timezone'])
+    flight_search = FlightSearch(user_params)
 
     # First, get all data from the spreadsheet:
     data_manager.set_all_watched()
 
-    # data = data_manager.get_spreadsheet_data()
     # data_manager.all_watched_cities = data['prices']
     # print(data)
 
@@ -37,28 +35,14 @@ def main():
         cities_updated = data_manager.update_spreadsheet_data(cities_to_update)
 
     # Then, search each city for all round trip flights in given timeframe, for less than given price limit:
-    cheap_flights_found = flight_search.search_flights_for_all_cities(data_manager.cities_with_codes)
+    flights_found = flight_search.search_flights_for_all_cities(data_manager.cities_with_codes)
     
     # Finally, prepare and send cheap flight alert via email:
-    if cheap_flights_found:
-        flight_tables_by_city = flight_data.format_flights_to_tables(cheap_flights_found)
-        message_content = get_message(flight_data, flight_tables_by_city) 
-        message_subject = f'Flight Deals Alert: {", ".join(flight_tables_by_city.keys())}'
+    if flights_found:
+        message_content = get_message(flights_found) 
+        message_subject = f'Flight Deals Alert: {", ".join(flights_found.keys())}'
         
         send_email(message_subject, message_content)
-
-
-def get_message(flight_data: FlightData, flights: dict):
-    message = f'\nFlight deals found for: {", ".join(flights.keys())}\n\n'
-    
-    for city in flights:
-        # table = flights[city].get(['To Airport', 'Depart Date', 'Return Date', 'Nights', 'Price', 'Bag Fee (1)', 'Booking Link' ])
-        # print(f'\nFlights to {city}:\n\n', table)
-
-        city_flight_section = flight_data.format_flights_list_for_alert(city, flights[city])
-        message += city_flight_section
-
-    return message
 
 
 def update_cities_data(cities_missing_data: list, codes: dict):
@@ -75,6 +59,33 @@ def update_cities_data(cities_missing_data: list, codes: dict):
             cities_to_update.append(city_data)
     
     return cities_to_update
+
+
+def get_message(flights: dict):
+    message = f'\nFlight deals found for: {", ".join(flights.keys())}\n\n'
+    
+    for city in flights:
+        city_flight_section = format_flights_list_for_alert(city, flights[city])
+        message += city_flight_section
+
+    return message
+
+
+def format_flights_list_for_alert(city, city_flights):
+        symbol = user_params['currency_symbol']
+
+        message = f'{"-" * 50}\n\nFLIGHTS TO {city.upper()}\n'
+        f: FlightData
+        for f in city_flights:
+            message += f'\n\n🛫 Depart: {f.date_depart["date"]}, {f.date_depart["time"]}'
+            message += f'\n🛬 Return: {f.date_return["date"]}, {f.date_return["time"]}  (~{f.duration} nights)'
+            message += f'\n💰 {symbol}{f.price:.2f}  (w/ 1 bag, +{symbol}{f.bag_fee})'
+            message += f'\n\nLink to view & book flight:\n\n{f.booking_link}\n'
+        
+        message += f'\n\n{"-" * 50}\n'
+        
+        return message
+
 
 #TODO:
 def send_email(subject: str, content: str):

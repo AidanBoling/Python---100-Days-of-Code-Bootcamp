@@ -1,79 +1,68 @@
-from data_manager import DataManager
-from flight_search import FlightSearch
 from dateutil import parser
-from pytz import timezone
-import pandas
-
-data_map =[{'table_col': 'From City', 'kiwi_api': ['cityFrom']},
-            {'table_col': 'From Airport', 'kiwi_api': ['flyFrom']},
-            {'table_col': 'To City', 'kiwi_api': ['cityTo']},
-            {'table_col': 'To Airport', 'kiwi_api': ['flyTo']},
-            {'table_col': 'Depart Date', 'kiwi_api': ['local_departure']},
-            {'table_col': 'Return Date', 'kiwi_api': ['route', -1, 'local_arrival']},
-            {'table_col': 'Nights', 'kiwi_api': ['nightsInDest']},
-            {'table_col': 'Price', 'kiwi_api': ['price']},
-            {'table_col': 'Bag Fee (1)', 'kiwi_api': ['bags_price', '1']},
-            {'table_col': 'Seats Available', 'kiwi_api': ['availability', 'seats']},
-            {'table_col': 'Booking Link', 'kiwi_api': ['deep_link']},
-           ]
-
+from pytz import timezone    
 
 class FlightData:
-    #This class is responsible for structuring the flight data.
-    def __init__(self, FlightSearch: FlightSearch, user_timezone):
-        self.spreadsheet = DataManager
-        self.flights = FlightSearch
+    def __init__(self, user_timezone, from_city, from_airport, to_city, to_airport, date_depart, date_return, duration, price, bag_fee_single, seats_available, booking_link):
         self.local_tz = timezone(user_timezone)
+        self._from_city = from_city
+        self._from_airport = from_airport
+        self._to_city = to_city
+        self._to_airport = to_airport
+        self._date_depart = date_depart
+        self._date_return = date_return
+        self._duration = duration
+        self._price = price
+        self._bag_fee = bag_fee_single
+        self._seats_available = seats_available
+        self._booking_link = booking_link
+
+    @property
+    def from_city(self):
+        return self._from_city
     
+    @property
+    def from_airport(self):
+        return self._from_airport
 
-    def format_flights_to_tables(self, all_flights: list):
+    @property
+    def to_city(self):
+        return self._to_city
 
-        def get_nested_data(data, keys):
-            for key in keys:
-                data = data[key]
-            return data
-        
-        flights_by_city = {}
-        for city in all_flights:
-            
-            dict = {}
-            for col in data_map:
-                dict[col['table_col']] = []
+    @property
+    def to_airport(self):
+        return self._to_airport
 
-            for flight in city:
-                for col in data_map:
-                    column_name = col['table_col']
-                    data = get_nested_data(flight, col['kiwi_api'])
-                    
-                    dict[column_name].append(data)
+    @property
+    def date_depart(self):
+        return self.format_date_time_to_local(self._date_depart)
 
-            city_flights_table = pandas.DataFrame(dict)
-            city_name = city[0]['cityTo']
-            flights_by_city[city_name] = city_flights_table
+    @property
+    def date_return(self):
+        return self.format_date_time_to_local(self._date_return)
 
-        return flights_by_city
+    @property
+    def duration(self):
+        return self._duration
+    
+    @property
+    def price(self):
+        return self._price
 
-
-    def format_flights_list_for_alert(self, city, city_flights):
-        message = f'{"-" * 50}\n\nFLIGHTS TO {city.upper()}\n'
-        
-        rows = city_flights.last_valid_index()
-        for i in range(rows):
-            depart = self.format_date_time(city_flights.at[i, 'Depart Date'])
-            return_d = self.format_date_time(city_flights.at[i, 'Return Date'])
-
-            message += f'\n\n🛫 Depart: {depart["date"]}, {depart["time"]}'
-            message += f'\n🛬 Return: {return_d["date"]}, {return_d["time"]}  (~{city_flights.at[i, "Nights"]} nights)'
-            message += f'\n💰 ${city_flights.at[i, "Price"]:.2f}  (w/ 1 bag, +${city_flights.at[i, "Bag Fee (1)"]})'
-            message += f'\n\nLink to view & book flight:\n\n{city_flights.at[i, "Booking Link"]}\n'
-        
-        message += f'\n\n{"-" * 50}\n'
-        
-        return message
+    @property
+    def bag_fee(self):
+        return self._bag_fee
+    
+    @property
+    def seats_available(self):
+        return self._seats_available
+    
+    @property
+    def booking_link(self):
+        return self._booking_link
 
 
-    def format_date_time(self, date):
-        date_time = parser.parse(date)
+    def format_date_time_to_local(self, datetime: str):
+        date_time = parser.parse(datetime)
         local_dt = date_time.astimezone(self.local_tz)
         
         f_date = local_dt.astimezone().strftime('%b %d, %Y')

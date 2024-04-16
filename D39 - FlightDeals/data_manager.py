@@ -12,6 +12,7 @@ sheety_url = f'https://api.sheety.co/{USERNAME}/{project_name}/{sheet_name}'
 
 class DataManager:
     #This class is responsible for talking to the Google Sheet.
+    
     def __init__(self):
         self.api_url = sheety_url
         self.headers = {'Authorization': 'Bearer ' + AUTH, 'Content-Type': 'application/json'}
