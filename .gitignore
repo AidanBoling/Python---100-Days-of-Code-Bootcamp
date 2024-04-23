@@ -1,7 +1,9 @@
 **/.DS_Store
 /.vscode
 **/__pycache__
+/.cache
 /.idea
+/venv
 
 /D1-9 - Misc
 /D14 - HighLowGame
@@ -22,5 +24,9 @@
 /D35
 /D37 - HabitTracker
 /D38
+/D45
+/D46 - TimeMachineSpotifyPlaylist
+/D48 - AutoCookieClicker
 
+~
 **/high_score.txt
