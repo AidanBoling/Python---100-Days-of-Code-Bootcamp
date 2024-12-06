@@ -31,10 +31,7 @@ def get_input(prompt, input_validation = 'none', options = []):
         try:
             user_input = input(prompt).strip()
             if user_input:
-                if input_validation == 'numeric' and user_input.isnumeric() and 0 < int(user_input) <= len(chars):
-                    return int(user_input)
-
-                elif input_validation == 'options' and len(options) > 0 and user_input.lower() in options:
+                if input_validation == 'options' and len(options) > 0 and user_input.lower() in options:
                     return user_input.lower()
                     
                 elif input_validation == 'none':
@@ -58,6 +55,7 @@ def confirm_exit():
         return
 
     else:
+        print('Exiting.')
         sys.exit()
 
 
