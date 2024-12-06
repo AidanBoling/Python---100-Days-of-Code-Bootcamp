@@ -1,5 +1,6 @@
 morse_code_dict = {'letter gap': '   ',
                    'word gap': '       ',
+                   ' ': '    ',
                    'A': '. ---',
                    'B': '--- . . .',
                    'C': '--- . --- .',
