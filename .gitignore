@@ -1,9 +1,4 @@
-**/.DS_Store
-/.vscode
-**/__pycache__
-/.cache
-/.idea
-/venv
+# Specific Folders/Files
 
 /D1-9 - Misc
 /D14 - HighLowGame
@@ -27,6 +22,111 @@
 /D45
 /D46 - TimeMachineSpotifyPlaylist
 /D48 - AutoCookieClicker
+/D51
+/D53
+/D55
+/D56
+/D57
+/D58 - Blog
+/D61 - FlaskSecrets
+/D62 - CoffeeAndWifi
+/D63 - LibraryProject
+/D66 - CafeAPI
+/D67 - BlogUpgrade
+/D68 - Flask Auth
+/D69 - Blog Auth
+/D72
+/D73
+/D74
+/D75
+/D76
+/D77
+/D78
+
 
 ~
 **/high_score.txt
+notes.md
+
+
+# Miscellaneous
+**/.DS_Store
+/.vscode
+/.idea
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+**/__pycache__
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+/.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Environments
+.env
+.venv
+env/
+venv/
+/venv
+ENV/
+env.bak/
+venv.bak/
+
+# mkdocs documentation
+/site
