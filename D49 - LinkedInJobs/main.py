@@ -251,10 +251,12 @@ def get_job_info(job_id:str, jobs:list, attempt_num:int=1):
         if attempt_num < MAX_ATTEMPTS:
             return retry
         else:
-            job['company'] = {
-                'name': '',
-                'location': '',
-                }
+            # job['company'] = {
+            #     'name': '',
+            #     'location': '',
+            #     }
+            job['company name'] = ''
+            job['company location'] = ''
             job['posted date'] = ''
 
     else:
@@ -262,11 +264,13 @@ def get_job_info(job_id:str, jobs:list, attempt_num:int=1):
         # print('company and post details: ', company_posting_details)
         
         job['posted date'] = company_posting_details[2]
-        job['company'] = {
-            'name': company_posting_details[0],
-            'location': company_posting_details[1],
-            }
-    print('Company: ', job['company'])
+        # job['company'] = {
+        #     'name': company_posting_details[0],
+        #     'location': company_posting_details[1],
+        #     }
+        job['company name'] = company_posting_details[0]
+        job['company location'] = company_posting_details[1]
+        print(f'Company: {job["company name"]} ({job["company location"]})')
     
     # ...More about company:
     try:
@@ -277,7 +281,7 @@ def get_job_info(job_id:str, jobs:list, attempt_num:int=1):
             icon_type = element.find_element(By.CSS_SELECTOR, 'li-icon').get_attribute('type')
             if icon_type == 'company':
                 company_info_other = [item.strip() for item in element.text.split('·')]
-                job['company']['other'] = company_info_other
+                job['company other'] = company_info_other
                 # print('Company info - other: ', company_info_other)
     except selexceptions.NoSuchElementException:
         pass
