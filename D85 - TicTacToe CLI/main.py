@@ -2,39 +2,69 @@ import sys
 import re
 import random
 
-def main():
+# from board import Board, COL_LABELS
 
-    # Initial setup user questions:
-    # - board size? 
-    #       Make note to user that max board size is {len(COL_LETTERS)}.
-    #       User input validation: only accept numbers, which are <= len(COL_LETTERS)
+def main():
+    print('\n Welcome to Tic Tac Toe!\n')
+    print('\nSetup: ')
+    # BOARD SETUP
+    board_size_options = [f'{i}' for i in range(3, len(COL_LABELS)+1)]
+    board_size = 3
+    board_prompt = f"\nBoard size is set to {board_size}. Would you like to change this? \nType 'y' to change, and 'n' (or leave blank) to keep current size: "
+    board_prompt_2 = f'Enter number from 3 to {len(COL_LABELS)} (max board size): '
+
+    change_board_size = get_input(board_prompt, allow_blank=True) 
+    if change_board_size == 'y':
+        board_size = int(get_input(board_prompt_2, options=board_size_options))
     
-    # create Board
-    # create players
-    # game_logic = GameLogic
-    # game_logic.run_game()
+    board = Board(board_size)
+
+    # PLAYER SETUP
+    name_1 = 'Player 1'
+    name_2 = 'Player 2'
+    names_prompt = "\nCustomize player names? \nType 'y' to customize, and 'n' (or leave blank) to use defaults: "
+    customize_names = get_input(names_prompt, options = ['y', 'n'], allow_blank=True)
+    if customize_names == 'y':
+        name_1 = get_input('Enter Player 1 name: ').title()
+        name_2 = get_input('Enter Player 2 name: ').title()
+        # Q: Add name validation?
+
+    player_a = Player(name_1)
+    player_b = Player(name_2)
+
+    # GAME PLAY
+    game_logic = GameLogic(board, player_a, player_b)
+    continue_play = True
     
-    # After game over: Play again?
-    pass
+    while continue_play:
+        game_logic.run_game()
+        
+        player_input = get_input('\n...Play again? (y/n) \n', options = ['y', 'n', 'yes', 'no'])
+        if player_input in ['n', 'no']:
+            continue_play=False
+
+    print('\nGoodbye!\n')
 
 
 # Helpers:
 
-def confirm_exit(noun:str = 'program'):
+def confirm_exit(noun:str = 'program', exit_message='Exiting.'):
         confirm = input(f'No input given. Exit {noun}? (y/n) ')
         
         if confirm.strip().lower() == 'n':
             return
 
         else:
-            print('Exiting.')
+            print(exit_message)
             sys.exit()
 
 
-def get_input(prompt, options:list = [], validation_func=None):
+def get_input(prompt, options:list = [], validation_func=None, allow_blank=False):
         '''Asks for input from user, using passed-in prompt. If any options
-        passed in, only input matching one of the options is accepted. If 
-        input is empty, user asked if they would like to exit.
+        passed in, only input matching one of the options is accepted. 
+        
+        If allow_blank=False (default), when the input is empty, user asked 
+        if they would like to exit.
         
         Also accepts a validation_func: any function that accepts a string
         (the user input) and returns a boolean, where True means the string 
@@ -59,7 +89,10 @@ def get_input(prompt, options:list = [], validation_func=None):
                         return user_input.lower()
 
                 else:
-                    confirm_exit('game')
+                    if not allow_blank: 
+                        confirm_exit('game')
+                    else: 
+                        return
 
             except KeyboardInterrupt:
                 print('\n')
@@ -141,9 +174,8 @@ class Board:
             raise ValueError('Invalid move: Slot already taken.\n')
     
 
-    def clear_board():
-        #TODO
-        pass
+    # def clear_board():
+    #     pass
 
 
     # TODO (?): throw error if try to instantiate with board size larger than COL_LABELS
@@ -164,15 +196,15 @@ class GameLogic:
         self.total_games = 0
         self.game_over = True
         
-        self.setup_new_game()
+        self.prep_new_game()
 
-    def setup_new_game(self):
+
+    def prep_new_game(self):
         players = [self.player_a, self.player_b]
-
         is_first = None
+
         if self.total_games == 0:
-            is_first = random.choice([self.player_a, self.player_b])
-            
+            is_first = random.choice([self.player_a, self.player_b])  
         else:
             for player in players:
                 if player != self.winner_last_game:
@@ -186,39 +218,47 @@ class GameLogic:
 
         self.player_current_turn = players[0]
 
+        if self.total_games > 0:
+            self.board.build_board()
+
 
     def run_game(self):
-        self.setup_new_game()
+        self.prep_new_game()
         self.game_over = False
+        print('\nGame on!')
+        self.display_current_board()
 
         while not self.game_over:
             self.get_player_move()
             
             # Process end-of-turn:
-            # Once move is input successfully, print board
-            self.display_updated_board()
-            
-            # Assess if player has won
+            self.display_current_board()
             player_won = self.check_for_win()
             
             if not player_won:
                 self.switch_player_turn()
-        
-        # Process end-of-game:
-            # Update stats:
-            # set winner_last_game = current_turn_player
-            # set current_turn_player.wins += 1
-            # set self.total_games += 1
+            else:
+                self.game_over = True
 
-            # Get input:  (--> should prob be in main())
-            # Ask if play again
-            # If yes, ask if change board size
-                
+        # Process end-of-game:
+        winner = self.player_current_turn
+        self.winner_last_game = winner
+        winner.wins += 1
+        self.total_games += 1
+
+        print(f'\n{winner.name} wins!\n')
+        print('\n---Running stats---\n')
+        print('Total games: ', self.total_games)
+        print(f'\n{self.player_a.name} wins: ', self.player_a.wins)
+        print(f'{self.player_b.name} wins: ', self.player_b.wins)
+        print('\n-------------------\n')
+
     
     def switch_player_turn(self):
         for player in [self.player_a, self.player_b]:
             if self.player_current_turn != player:
                 self.player_current_turn = player
+                break
 
 
     def get_player_move(self):
@@ -264,7 +304,8 @@ class GameLogic:
             except ValueError as e:
                 print(e)
 
-    def display_updated_board(self):
+
+    def display_current_board(self):
         img = self.board.generate_board_img()
         print('\n', img, '\n')
         
@@ -276,10 +317,8 @@ class GameLogic:
         row_nums = self.board.rows
         col_labels = self.board.cols
         slots = self.board._slots
-
         diagonals = [[],[]]
         
-        # Option B (dict):
         # Columns
         cols = [slots[col].values() for col in slots.keys()]
         vectors.extend(cols)
@@ -302,10 +341,7 @@ class GameLogic:
         for vector in vectors:
             vector = list(set(vector))
             if len(vector) == 1 and vector[0] != self.board.empty_slot:
-                print('Win found!')
                 return True
-        
-        print('No wins')
             
 
 if __name__ == "__main__":
