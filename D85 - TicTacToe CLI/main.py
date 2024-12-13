@@ -120,6 +120,7 @@ class Board:
         self.empty_slot = ' '
         self._slot_matrix:list = []
         self._slots:dict = {}
+        self.slots_remaining = None
         self._marker_options = ['X', 'O']       # marker order matches turn order
 
         self.build_board()
@@ -132,6 +133,8 @@ class Board:
 
         for col in self.cols:
             self._slots[col] = {row: self.empty_slot for row in self.rows}
+
+        self.slots_remaining = self.size * self.size
 
 
     def generate_board_img(self):
@@ -170,6 +173,7 @@ class Board:
         slot_selected = self._slots[column][row]    # Adding extra step so throws KeyError if *either* 'column' or 'row' are invalid (rather than just 'column')
         if slot_selected == self.empty_slot:
             self._slots[column][row] = marker
+            self.slots_remaining -= 1
         else:
             raise ValueError('Invalid move: Slot already taken.\n')
     
@@ -193,7 +197,9 @@ class GameLogic:
         self.player_b: Player = player_b
         self.player_current_turn: Player = None
         self.winner_last_game: Player = None
+        # self.last_game_tied: bool = False
         self.total_games = 0
+        self.ties = 0
         self.game_over = True
         
         self.prep_new_game()
@@ -203,7 +209,7 @@ class GameLogic:
         players = [self.player_a, self.player_b]
         is_first = None
 
-        if self.total_games == 0:
+        if self.total_games == 0 or self.last_game_tied or self.winner_last_game == None:
             is_first = random.choice([self.player_a, self.player_b])  
         else:
             for player in players:
@@ -223,9 +229,13 @@ class GameLogic:
 
 
     def run_game(self):
-        self.prep_new_game()
+        self.prep_new_game()    
         self.game_over = False
+        print(f"\n{self.player_a.name} is '{self.player_a.marker}', 
+              {self.player_b.name} is '{self.player_b.marker}'.")
+        print(f'{self.player_current_turn.name} goes first.')
         print('\nGame on!')
+
         self.display_current_board()
 
         while not self.game_over:
@@ -233,22 +243,39 @@ class GameLogic:
             
             # Process end-of-turn:
             self.display_current_board()
+
             player_won = self.check_for_win()
-            
-            if not player_won:
+            is_tie = self.board.slots_remaining == 0
+
+            if not player_won and not is_tie:
                 self.switch_player_turn()
             else:
+                if is_tie:
+                    self.last_game_tied = True
+                else:
+                    self.last_game_tied = False
+
                 self.game_over = True
 
         # Process end-of-game:
-        winner = self.player_current_turn
-        self.winner_last_game = winner
-        winner.wins += 1
+        end_of_game_message = ''
+        if self.last_game_tied:
+            winner = None
+            self.ties += 1
+            end_of_game_message = f"It's a tie!"
+        else:
+            winner = self.player_current_turn
+            self.winner_last_game = winner
+            winner.wins += 1
+            end_of_game_message = f'{winner.name} wins!'
+
+        
         self.total_games += 1
 
-        print(f'\n{winner.name} wins!\n')
+        print(f'\n{end_of_game_message}\n')
         print('\n---Running stats---\n')
         print('Total games: ', self.total_games)
+        print(f'Ties: ', self.ties)
         print(f'\n{self.player_a.name} wins: ', self.player_a.wins)
         print(f'{self.player_b.name} wins: ', self.player_b.wins)
         print('\n-------------------\n')
@@ -271,7 +298,8 @@ class GameLogic:
         row = None
 
 
-        def move_validation(input:str):            
+        def move_validation(input:str):  
+            input.replace(' ', '')   
             if not len(input)==2:
                 return
             if not input.isalnum():
@@ -307,7 +335,7 @@ class GameLogic:
 
     def display_current_board(self):
         img = self.board.generate_board_img()
-        print('\n', img, '\n')
+        print('\n\n', img, '\n')
         
 
     def check_for_win(self):
@@ -342,7 +370,7 @@ class GameLogic:
             vector = list(set(vector))
             if len(vector) == 1 and vector[0] != self.board.empty_slot:
                 return True
-            
+
 
 if __name__ == "__main__":
     main()
