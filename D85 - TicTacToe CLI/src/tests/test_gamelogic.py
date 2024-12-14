@@ -1,5 +1,7 @@
-from app.main import Board, Player, GameLogic
 import pytest
+from app.board import Board
+from app.player import Player
+from app.gamelogic import GameLogic
 
 
 @pytest.fixture

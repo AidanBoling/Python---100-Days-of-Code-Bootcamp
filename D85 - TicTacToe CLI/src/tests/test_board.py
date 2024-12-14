@@ -1,5 +1,5 @@
 import pytest
-from app.main import Board
+from app.board import Board
 
 valid_column = 'A'
 valid_row = 1
