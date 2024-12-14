@@ -190,6 +190,7 @@ class GameLogic:
         self.player_b: Player = player_b
         self.player_current_turn: Player = None
         self.winner_last_game: Player = None
+        self.last_game_tied: bool = False
         self.total_games = 0
         self.ties = 0
         self.game_over = True
@@ -202,7 +203,7 @@ class GameLogic:
         is_first = None
 
         if self.winner_last_game == None or self.total_games == 0 or self.last_game_tied:
-            is_first = random.choice([self.player_a, self.player_b])  
+            is_first = random.choice(players)  
         else:
             for player in players:
                 if player != self.winner_last_game:
